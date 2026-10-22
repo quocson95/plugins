@@ -1,0 +1,33 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "quocson95-plugins",
+  "owner": {
+    "name": "quocson95"
+  },
+  "metadata": {
+    "description": "omp ports of Cursor plugins, plus the pstack tree for omp."
+  },
+  "plugins": [
+    {
+      "name": "pstack-omp",
+      "source": "./harness/pstack/omp",
+      "description": "if you want to go fast, go deep first. pstack helps you write less, but higher quality code. rigorous agent workflows you can parallelize with confidence. Ported to omp.",
+      "category": "developer-tools",
+      "license": "MIT",
+      "keywords": [
+        "pstack",
+        "poteto-mode",
+        "workflow",
+        "principles",
+        "subagents",
+        "omp"
+      ],
+      "tags": [
+        "workflow",
+        "principles",
+        "review",
+        "planning"
+      ]
+    }
+  ]
+}

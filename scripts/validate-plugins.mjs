@@ -116,15 +116,41 @@ for (const entry of claudeMarketplace.plugins ?? []) {
   }
 }
 
+const ompMarketplacePath = resolve(root, ".omp-plugin/marketplace.json");
+const ompMarketplace = existsSync(ompMarketplacePath) ? loadJSON(ompMarketplacePath) : { plugins: [] };
+
+for (const entry of ompMarketplace.plugins ?? []) {
+  const pluginDir = resolve(root, entry.source);
+  const pluginJsonPath = resolve(pluginDir, ".omp-plugin/plugin.json");
+
+  if (!existsSync(pluginDir)) {
+    fail(`Plugin "${entry.name}": source directory "${entry.source}" does not exist`);
+    continue;
+  }
+  if (!existsSync(pluginJsonPath)) {
+    fail(`Plugin "${entry.name}": missing .omp-plugin/plugin.json in "${entry.source}"`);
+    continue;
+  }
+
+  const pluginJson = loadJSON(pluginJsonPath);
+  if (pluginJson.name && pluginJson.name !== entry.name) {
+    fail(
+      `Plugin "${entry.name}": omp marketplace name does not match .omp-plugin/plugin.json name "${pluginJson.name}"`
+    );
+  }
+}
+
 const manifestPaths = [
   ".cursor-plugin/plugin.json",
   ".claude-plugin/plugin.json",
+  ".omp-plugin/plugin.json",
   "plugin.json",
 ];
 const sources = new Map();
 for (const entry of [
   ...(marketplace.plugins ?? []),
   ...(claudeMarketplace.plugins ?? []),
+  ...(ompMarketplace.plugins ?? []),
 ]) {
   sources.set(resolve(root, entry.source), entry.name);
 }
@@ -141,6 +167,21 @@ for (const [pluginDir, name] of sources) {
     for (const { path, version } of versions) {
       console.error(`  ${path.slice(root.length + 1)}: ${version}`);
     }
+  }
+}
+
+// The omp port is a harness tree of pstack, so its version must match pstack's.
+// The tree lives outside pstack/, so the per-plugin check above never sees both.
+const pstackVersion = loadJSON(resolve(root, "pstack/plugin.json")).version;
+for (const relativePath of [
+  "pstack/harness/omp/package.json",
+  "pstack/harness/omp/.omp-plugin/plugin.json",
+]) {
+  const path = resolve(root, relativePath);
+  if (!existsSync(path)) continue;
+  const version = loadJSON(path).version;
+  if (version !== pstackVersion) {
+    fail(`The omp port's ${relativePath} is version ${version}, but pstack is ${pstackVersion}`);
   }
 }
 

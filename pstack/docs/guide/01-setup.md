@@ -14,6 +14,8 @@ Cursor confirms the plugin is installed.
 
 In Claude Code, run `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. Claude Code prefixes plugin commands, so each command in this guide takes a `pstack:` prefix there, such as `/pstack:setup-pstack`, which writes its model rule to `~/.claude/rules/pstack-models.md`. The [Claude Code adapter](../harness/claude-code.md) covers the other differences.
 
+In omp, run `omp plugin marketplace add quocson95/plugins`, then `omp plugin install pstack-omp@quocson95-plugins`. The [omp adapter](../harness/omp.md) covers the other differences. If a Claude Code pstack is installed too, link the omp tree instead, with `omp plugin link <path-to>/harness/pstack/omp`, so the omp copy wins the shared skill names.
+
 ## Pick your models
 
 Run:
