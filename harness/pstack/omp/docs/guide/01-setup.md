@@ -16,6 +16,8 @@ In Claude Code, run `/plugin marketplace add cursor/plugins`, then `/plugin inst
 
 In omp, run `omp plugin marketplace add quocson95/plugins`, then `omp plugin install pstack-omp@quocson95-plugins`. The [omp adapter](../harness/omp.md) covers the other differences. If a Claude Code pstack is installed too, link the omp tree instead, with `omp plugin link <path-to>/harness/pstack/omp`, so the omp copy wins the shared skill names.
 
+In Antigravity, copy or link `harness/pstack/antigravity` into `.agents/plugins/pstack` (workspace) or `~/.gemini/config/plugins/pstack` (global). The [Antigravity adapter](https://github.com/cursor/plugins/blob/main/pstack/docs/harness/antigravity.md) covers the other differences.
+
 ## Pick your models
 
 Run:

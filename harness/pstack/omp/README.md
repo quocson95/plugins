@@ -44,6 +44,20 @@ claude code prefixes plugin commands and agents, so `/poteto-mode` is `/pstack:p
 
 in omp, the [omp adapter](./docs/harness/omp.md) maps every cursor name to its omp equivalent. the omp port injects the poteto-mode mandate into every session, the way the claude code plugin's session hook does, and `/setup-pstack` writes your model choices to `~/.omp/agent/pstack-models.md`.
 
+in antigravity:
+
+```bash
+# workspace plugin (recommended for project repo)
+mkdir -p .agents/plugins
+cp -r <path-to>/harness/pstack/antigravity .agents/plugins/pstack
+
+# or global plugin
+mkdir -p ~/.gemini/config/plugins
+cp -r <path-to>/harness/pstack/antigravity ~/.gemini/config/plugins/pstack
+```
+
+in antigravity, the [antigravity adapter](https://github.com/cursor/plugins/blob/main/pstack/docs/harness/antigravity.md) maps every cursor name to its antigravity equivalent. the antigravity port injects the poteto-mode mandate via `rules/AGENTS.md` into every session where the plugin is enabled, and `/setup-pstack` writes your model choices to `~/.gemini/config/rules/pstack-models.md`.
+
 claude code installs a generated copy of pstack, including this readme and the guide, from [`harness/pstack/`](https://github.com/cursor/plugins/tree/main/harness/pstack) at the repository root. after you change pstack, run `node scripts/generate-pstack-harness-trees.mjs` from the repository root and commit the result. ci fails while the generated copy is out of date.
 
 ## get started

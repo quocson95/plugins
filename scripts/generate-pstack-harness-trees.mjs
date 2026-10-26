@@ -49,6 +49,19 @@ const HARNESSES = [
     ],
     extras: ["package.json", "extensions/pstack.ts", ".omp-plugin/plugin.json", "SYNC.md"],
   },
+  {
+    tree: "antigravity",
+    adapter: "docs/harness/antigravity.md",
+    label: "Antigravity",
+    manifests: ["plugin.json"],
+    substitutions: [
+      {
+        from: "search `~/.cursor/plugins/` for a file whose path ends in `skills/poteto-mode/SKILL.md`. If more than one file matches, use the copy whose `.cursor-plugin/plugin.json` has the highest `version`.",
+        to: "read the installed copy of `skills/poteto-mode/SKILL.md` from the active plugin or workspace `.agents/skills/` directory.",
+      },
+    ],
+    extras: ["rules/AGENTS.md", "SYNC.md"],
+  },
 ];
 
 const README = `# pstack harness tree
