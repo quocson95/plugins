@@ -1,0 +1,10 @@
+{
+  "label": "ZCode",
+  "substitutions": [
+    {
+      "from": "search `~/.cursor/plugins/` for a file whose path ends in `skills/poteto-mode/SKILL.md`. If more than one file matches, use the copy whose `.cursor-plugin/plugin.json` has the highest `version`.",
+      "to": "read `~/.zcode/skills/poteto-mode/SKILL.md`, which the pstack install links to the installed copy."
+    }
+  ],
+  "version": []
+}
