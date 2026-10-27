@@ -1,0 +1,13 @@
+{
+  "label": "omp",
+  "substitutions": [
+    {
+      "from": "search `~/.cursor/plugins/` for a file whose path ends in `skills/poteto-mode/SKILL.md`. If more than one file matches, use the copy whose `.cursor-plugin/plugin.json` has the highest `version`.",
+      "to": "read `skill://poteto-mode`, which is the installed copy of `skills/poteto-mode/SKILL.md`."
+    }
+  ],
+  "version": [
+    "package.json",
+    ".omp-plugin/plugin.json"
+  ]
+}

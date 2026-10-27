@@ -14,9 +14,7 @@ Cursor confirms the plugin is installed.
 
 In Claude Code, run `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. Claude Code prefixes plugin commands, so each command in this guide takes a `pstack:` prefix there, such as `/pstack:setup-pstack`, which writes its model rule to `~/.claude/rules/pstack-models.md`. The [Claude Code adapter](../harness/claude-code.md) covers the other differences.
 
-In omp, run `omp plugin marketplace add quocson95/plugins`, then `omp plugin install pstack-omp@quocson95-plugins`. The [omp adapter](https://github.com/cursor/plugins/blob/main/pstack/docs/harness/omp.md) covers the other differences. If a Claude Code pstack is installed too, link the omp tree instead, with `omp plugin link <path-to>/harness/pstack/omp`, so the omp copy wins the shared skill names.
-
-In Antigravity, copy or link `harness/pstack/antigravity` into `.agents/plugins/pstack` (workspace) or `~/.gemini/config/plugins/pstack` (global). The [Antigravity adapter](https://github.com/cursor/plugins/blob/main/pstack/docs/harness/antigravity.md) covers the other differences.
+In omp, Antigravity, and OpenCode, install the port tree from this fork. [The ports guide](https://github.com/quocson95/plugins/blob/main/pstack/harness/README.md) covers the install steps and the differences for each.
 
 ## Pick your models
 

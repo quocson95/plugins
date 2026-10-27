@@ -74,6 +74,14 @@ When you're unsure whether a prompt is aimed right, run [`/sharpen`](../../skill
 
 The agent says what a top professional would do that you didn't ask for, the rawest material they would start from, the methods and tools they would use, and what other than you or the agent would show the result is right. Then it rewrites your prompt to ask for exactly that, deeper but not bigger, and leaves your choices open. It doesn't do the task. Read the rewrite, then send it, for example with `/poteto-mode`.
 
+When the plan still has product calls only you can make, run [`/grill`](../../skills/grill/SKILL.md) before the build:
+
+```text
+/grill offline mode for the editor. what syncs, and who wins a conflict?
+```
+
+The agent asks in numbered rounds, each question with its recommended answer, so "yes" accepts it. It looks up every fact itself and asks you only for decisions. Settled terms go into `GLOSSARY.md` and hard-to-reverse decisions into `docs/adr/`, where later agents read them.
+
 ## Follow up short
 
 When the conversation already carries the context, the prompt shrinks to almost nothing. All of these are enough:

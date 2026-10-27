@@ -16,53 +16,35 @@ const LINK = /\]\(([^)\s]+)\)/g;
 
 // One tree per harness. `tree` is the directory the harness installs; `adapter` is the
 // pstack-relative path of the harness mapping doc; `label` names the harness in prose.
-// `manifests` lists the manifest files the tree ships: a harness that reads a Claude-style
-// `.claude-plugin/plugin.json` cannot also ship the Agent Plugins root `plugin.json`, because
-// omp routes a root that declares the Agent Plugins schema to its strict skill validator.
+// `manifests` lists pstack's own manifest files the tree ships.
 // `substitutions` rewrites harness-specific paths in the copied text, so a tree never
 // points at a directory the harness does not have.
-// `extras` lists files the tree needs that are not part of pstack/. They live under
-// pstack/harness/<tree>/ and are copied verbatim, so the tree stays generated.
-const HARNESSES = [
-  {
-    tree: "claude-code",
-    adapter: "docs/harness/claude-code.md",
-    label: "Claude Code",
-    manifests: ["plugin.json", ".claude-plugin/plugin.json"],
-    substitutions: [],
-    extras: [],
-  },
-  {
-    tree: "omp",
-    adapter: "docs/harness/omp.md",
-    label: "omp",
-    // The omp tree ships an omp-native manifest, not pstack's Agent Plugins
-    // root `plugin.json`: omp routes a root that declares the Agent Plugins
-    // schema to its strict skill validator, which rejects pstack's
-    // `disable-model-invocation` frontmatter field.
-    manifests: [".omp-plugin/plugin.json"],
-    substitutions: [
-      {
-        from: "search `~/.cursor/plugins/` for a file whose path ends in `skills/poteto-mode/SKILL.md`. If more than one file matches, use the copy whose `.cursor-plugin/plugin.json` has the highest `version`.",
-        to: "read `skill://poteto-mode`, which is the installed copy of `skills/poteto-mode/SKILL.md`.",
-      },
-    ],
-    extras: ["package.json", "extensions/pstack.ts", ".omp-plugin/plugin.json", "SYNC.md"],
-  },
-  {
-    tree: "antigravity",
-    adapter: "docs/harness/antigravity.md",
-    label: "Antigravity",
-    manifests: ["plugin.json"],
-    substitutions: [
-      {
-        from: "search `~/.cursor/plugins/` for a file whose path ends in `skills/poteto-mode/SKILL.md`. If more than one file matches, use the copy whose `.cursor-plugin/plugin.json` has the highest `version`.",
-        to: "read the installed copy of `skills/poteto-mode/SKILL.md` from the active plugin or workspace `.agents/skills/` directory.",
-      },
-    ],
-    extras: ["rules/AGENTS.md", "SYNC.md"],
-  },
-];
+const CLAUDE_CODE = {
+  tree: "claude-code",
+  adapter: "docs/harness/claude-code.md",
+  label: "Claude Code",
+  manifests: ["plugin.json", ".claude-plugin/plugin.json"],
+  substitutions: [],
+};
+
+// Every other harness is a port: a folder pstack/harness/<tree>/ that holds a `port.json`
+// descriptor and the files the tree needs beyond pstack/ (its manifest, a session hook).
+// The generator copies the folder into the tree and stamps pstack's version into each
+// JSON file the descriptor names under `version`, so an upstream version bump needs no
+// port edit. A new port is a new folder plus its adapter, with no change to this script.
+const PORTS = join(PSTACK, "harness");
+const ports = existsSync(PORTS)
+  ? readdirSync(PORTS)
+      .filter((tree) => existsSync(join(PORTS, tree, "port.json")))
+      .sort()
+      .map((tree) => {
+        const { label, substitutions = [], version = [] } = JSON.parse(readFileSync(join(PORTS, tree, "port.json"), "utf8"));
+        return { tree, adapter: `docs/harness/${tree}.md`, label, manifests: [], substitutions, overlay: join(PORTS, tree), version };
+      })
+  : [];
+const HARNESSES = [CLAUDE_CODE, ...ports];
+const VERSION = JSON.parse(readFileSync(join(PSTACK, "plugin.json"), "utf8")).version;
+const VERSION_FIELD = /("version"\s*:\s*)"[^"]*"/;
 
 const README = `# pstack harness tree
 
@@ -187,29 +169,32 @@ function render(harness) {
     if (wrap) files.get(path).bytes = Buffer.from(text.replace(/^(# .*)\n+/m, `$1\n\n${line}\n\n`));
   }
   files.set("LICENSE", file(join(PSTACK, "LICENSE")));
-  for (const manifest of harness.manifests) {
-    // A harness whose manifest is one of pstack's own gets that file. A harness
-    // with its own manifest ships it as an extra instead.
-    const source = join(PSTACK, "harness", harness.tree, manifest);
-    files.set(manifest, existsSync(source) ? file(source) : file(join(PSTACK, "plugin.json")));
-  }
-  for (const extra of harness.extras) {
-    const source = join(PSTACK, "harness", harness.tree, extra);
-    if (!existsSync(source)) {
-      problems.push(`${harness.label} tree: extra file ${extra} is missing at pstack/harness/${harness.tree}/${extra}`);
-      continue;
+  for (const manifest of harness.manifests) files.set(manifest, file(join(PSTACK, "plugin.json")));
+  if (harness.overlay) {
+    for (const path of walk(harness.overlay)) {
+      const target = relative(harness.overlay, path);
+      if (target !== "port.json") files.set(target, file(path));
     }
-    files.set(extra, file(source));
+    for (const path of harness.version) {
+      const entry = files.get(path);
+      if (!entry) {
+        problems.push(`${harness.label} port: port.json versions ${path}, which pstack/harness/${harness.tree}/ does not have`);
+        continue;
+      }
+      // Replace the value in place, so the source's formatting reaches the tree unchanged.
+      const text = entry.bytes.toString("utf8");
+      if (!VERSION_FIELD.test(text)) problems.push(`${harness.label} port: ${path} has no "version" field to stamp`);
+      entry.bytes = Buffer.from(text.replace(VERSION_FIELD, `$1${JSON.stringify(VERSION)}`));
+    }
   }
+  const matched = new Set();
   for (const [path, entry] of files) {
     if (!path.endsWith(".md")) continue;
     let text = entry.bytes.toString("utf8");
-    for (const { from, to } of harness.substitutions) {
-      if (!text.includes(from)) {
-        problems.push(`${harness.label} tree: no text matches the substitution for ${JSON.stringify(from.slice(0, 40))}`);
-        continue;
-      }
-      text = text.replaceAll(from, to);
+    for (const substitution of harness.substitutions) {
+      if (!text.includes(substitution.from)) continue;
+      matched.add(substitution);
+      text = text.replaceAll(substitution.from, substitution.to);
     }
     text = text.replace(LINK, (link, href) => {
       const target = resolve(path, href);
@@ -218,6 +203,12 @@ function render(harness) {
       return `](${GITHUB}/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
     });
     entry.bytes = Buffer.from(text);
+  }
+  // An upstream edit to the text a substitution targets leaves the tree pointing at a Cursor path.
+  for (const substitution of harness.substitutions) {
+    if (!matched.has(substitution)) {
+      problems.push(`${harness.label} tree: no text matches the substitution for ${JSON.stringify(substitution.from.slice(0, 60))}`);
+    }
   }
   return files;
 }
@@ -239,8 +230,8 @@ for (const harness of HARNESSES) {
     }
   }
 }
-for (const link of dangling) console.log(`FAIL ${link}`);
-if (dangling.length > 0) process.exit(1);
+for (const problem of [...problems, ...dangling]) console.log(`FAIL ${problem}`);
+if (problems.length + dangling.length > 0) process.exit(1);
 
 if (process.argv.includes("--check")) {
   const onDisk = new Map(existsSync(OUT) ? walk(OUT).map((path) => [relative(OUT, path), file(path)]) : []);
