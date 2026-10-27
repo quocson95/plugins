@@ -1,0 +1,10 @@
+{
+  "name": "pstack-opencode",
+  "version": "0.0.0",
+  "private": true,
+  "description": "pstack for OpenCode: the poteto agent style, its principles, its playbooks, and the poteto-mode mandate.",
+  "type": "module",
+  "exports": {
+    ".": "./server.ts"
+  }
+}

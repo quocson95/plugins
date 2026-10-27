@@ -1,0 +1,12 @@
+{
+  "label": "OpenCode",
+  "substitutions": [
+    {
+      "from": "search `~/.cursor/plugins/` for a file whose path ends in `skills/poteto-mode/SKILL.md`. If more than one file matches, use the copy whose `.cursor-plugin/plugin.json` has the highest `version`. Your skill catalog hides this skill, so a missing catalog entry does not mean pstack is absent. If no such file exists, stop and tell your parent.",
+      "to": "load the `poteto-mode` skill with the `skill` tool. The pstack plugin registers every pstack skill under its folder name. Your skill catalog hides this skill, so a missing catalog entry does not mean pstack is absent. If the `skill` tool cannot load it, stop and tell your parent."
+    }
+  ],
+  "version": [
+    "package.json"
+  ]
+}

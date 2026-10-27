@@ -6,6 +6,7 @@ This fork of `cursor/plugins` adds ports of pstack to harnesses upstream does no
 | --- | --- | --- |
 | omp | `harness/pstack/omp/` | `pstack/docs/harness/omp.md` |
 | Antigravity | `harness/pstack/antigravity/` | `pstack/docs/harness/antigravity.md` |
+| OpenCode | `harness/pstack/opencode/` | `pstack/docs/harness/opencode.md` |
 
 ## How a port is built
 
@@ -13,7 +14,7 @@ A port is one folder here, `pstack/harness/<tree>/`, plus one adapter, `pstack/d
 
 `port.json` has three fields:
 
-- `label` names the harness in prose, such as the adapter line `In omp, read the omp adapter`.
+- `label` names the harness in prose, such as the adapter line `In OpenCode, read the OpenCode adapter`.
 - `substitutions` lists `{ "from", "to" }` text replacements for a Cursor path the harness does not have. The generator fails when a `from` matches no file, so an upstream rewrite of that text cannot slip through.
 - `version` lists the JSON files in the port folder whose `version` the generator sets from `pstack/plugin.json`. Their source value is a `0.0.0` placeholder. An upstream version bump needs no port edit.
 
@@ -89,3 +90,34 @@ mkdir -p ~/.gemini/config/plugins && cp -r <path-to>/harness/pstack/antigravity 
 ```
 
 Without the plugin bundle, copy `skills/*` into `.agents/skills/` and `rules/AGENTS.md` to `.agents/rules/pstack.md`.
+
+## OpenCode
+
+`server.ts` is the OpenCode plugin. It registers every skill and one `/name` command per skill, registers `poteto-agent` and `comment-sicko` as subagents, and injects the mandate into each main session plus the adapter pointer and `~/.config/opencode/pstack-models.md` into every session. `package.json` names `server.ts` in `exports`. The plugin needs no dependencies and no build, because its `@opencode/plugin` import is type-only.
+
+Install from Git, or point a config at a checkout:
+
+```sh
+opencode plugin add 'github:quocson95/plugins#main::path:harness/pstack/opencode'
+```
+
+```jsonc
+// ~/.config/opencode/opencode.jsonc, or a project opencode.jsonc
+{ "plugins": ["/absolute/path/to/harness/pstack/opencode"] }
+```
+
+OpenCode also loads skills from `.agents/skills/`, `.claude/skills/`, and `.opencode/skills/`, and those win over a plugin's skill with the same name. If another harness's pstack copy sits there, the model gets that copy, which names the wrong adapter. Remove it, or keep pstack in one place.
+
+The plugin injects the model sheet itself. Remove any `pstack-models.md` entry from `instructions` in `opencode.json(c)`, or the sheet arrives twice. The sheet's `session hook: off` line stops the mandate.
+
+Check in a scratch project. `opencode api` talks to the background service, and the header points it at the project:
+
+```sh
+mkdir -p /tmp/pstack-check && cd /tmp/pstack-check && git init -q
+echo '{ "plugins": ["<path-to>/harness/pstack/opencode"] }' > opencode.json
+opencode api get /api/agent -H "x-opencode-directory:$PWD" | jq '[.data[] | select(.mode == "subagent") | .id]'
+opencode api get /api/command -H "x-opencode-directory:$PWD" | jq '[.data[].name]'
+grep 'plugin.id=pstack' ~/.local/share/opencode/log/opencode.log | tail -3
+```
+
+The agents include `poteto-agent` and `comment-sicko`, and the commands include `poteto-mode`. A log line that says `disabled plugin after transform failure` names the field OpenCode rejected.
