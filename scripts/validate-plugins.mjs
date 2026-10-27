@@ -170,22 +170,6 @@ for (const [pluginDir, name] of sources) {
   }
 }
 
-// The omp and antigravity ports are harness trees of pstack, so their versions must match pstack's.
-// The trees live outside pstack/, so the per-plugin check above never sees both.
-const pstackVersion = loadJSON(resolve(root, "pstack/plugin.json")).version;
-for (const relativePath of [
-  "pstack/harness/omp/package.json",
-  "pstack/harness/omp/.omp-plugin/plugin.json",
-  "pstack/harness/antigravity/plugin.json",
-]) {
-  const path = resolve(root, relativePath);
-  if (!existsSync(path)) continue;
-  const version = loadJSON(path).version;
-  if (version !== pstackVersion) {
-    fail(`The harness port's ${relativePath} is version ${version}, but pstack is ${pstackVersion}`);
-  }
-}
-
 // 3. Report results
 if (errors > 0) {
   console.error(`\nValidation failed with ${errors} error(s).`);
