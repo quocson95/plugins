@@ -1,7 +1,7 @@
 // Renders and saves the session-end digest. Each harness hook reads its own transcript format into a Session
 // and calls writeDigest, so the file looks the same whichever harness wrote it.
 //
-// Session: { harness, id, cwd, branch?, startedAt?, reason?, transcript?, prompts: string[], files: string[], commands: number, lastReply }
+// Session: { harness, id, cwd, branch?, startedAt? (ISO string or epoch ms), reason?, transcript?, prompts: string[], files: string[], commands: number, lastReply }
 
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
@@ -21,6 +21,11 @@ export function stamp(date = new Date()) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
 }
 
+// The first 8 characters of the id after any type prefix, such as ZCode's `session_` or OpenCode's `ses_`.
+function shortId(id) {
+  return id.replace(/^[a-z]+_/i, "").slice(0, 8);
+}
+
 function gitBranch(cwd) {
   try {
     return execFileSync("git", ["branch", "--show-current"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() || undefined;
@@ -33,11 +38,11 @@ function render(session) {
   const { prompts } = session;
   const shown = prompts.length > PROMPTS ? [...prompts.slice(0, PROMPTS / 2), "…", ...prompts.slice(-PROMPTS / 2)] : prompts;
   return [
-    `# Session ${session.id.slice(0, 8)}`,
+    `# Session ${shortId(session.id)}`,
     "",
     `- **Harness:** ${session.harness}`,
-    `- **Started:** ${session.startedAt ?? "unknown"}`,
-    `- **Ended:** ${new Date().toISOString()}${session.reason ? ` (${session.reason})` : ""}`,
+    `- **Started:** ${session.startedAt ? new Date(session.startedAt).toISOString() : "unknown"}`,
+    `- **Updated:** ${new Date().toISOString()}${session.reason ? ` (${session.reason})` : ""}`,
     `- **Project:** ${session.cwd}${session.branch ? `, branch \`${session.branch}\`` : ""}`,
     ...(session.transcript ? [`- **Transcript:** ${session.transcript}`] : []),
     "",
@@ -62,10 +67,12 @@ function render(session) {
 
 // Returns the path written, or undefined when no folder is saved, summaries are off, or the session had no prompts.
 // A hook cannot ask the user, so an unset folder is a skip here; the session-start nudge and the skill do the asking.
+// The file is named by the session's start, so harnesses with no session-end event can rewrite it after every turn.
 export function writeDigest(session) {
   const dir = readDir();
   if (dir === undefined || dir === "off" || session.prompts.length === 0) return undefined;
-  const path = summaryPath(dir, `${stamp()}-session-${session.id.slice(0, 8)}`, session.cwd);
+  const started = new Date(session.startedAt ?? Date.now());
+  const path = summaryPath(dir, `${stamp(started)}-session-${shortId(session.id)}`, session.cwd);
   writeFileSync(path, render({ ...session, branch: session.branch ?? gitBranch(session.cwd) }));
   return path;
 }
