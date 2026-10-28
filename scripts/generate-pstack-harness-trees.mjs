@@ -19,12 +19,16 @@ const LINK = /\]\(([^)\s]+)\)/g;
 // `manifests` lists pstack's own manifest files the tree ships.
 // `substitutions` rewrites harness-specific paths in the copied text, so a tree never
 // points at a directory the harness does not have.
+const PORTS = join(PSTACK, "harness");
+// pstack/harness/claude-code/ holds this fork's Claude Code additions, such as its hooks. It has no
+// `port.json`, so it is an overlay on upstream's tree rather than a port.
 const CLAUDE_CODE = {
   tree: "claude-code",
   adapter: "docs/harness/claude-code.md",
   label: "Claude Code",
   manifests: ["plugin.json", ".claude-plugin/plugin.json"],
   substitutions: [],
+  ...(existsSync(join(PORTS, "claude-code")) && { overlay: join(PORTS, "claude-code"), version: [] }),
 };
 
 // Every other harness is a port: a folder pstack/harness/<tree>/ that holds a `port.json`
@@ -32,7 +36,6 @@ const CLAUDE_CODE = {
 // The generator copies the folder into the tree and stamps pstack's version into each
 // JSON file the descriptor names under `version`, so an upstream version bump needs no
 // port edit. A new port is a new folder plus its adapter, with no change to this script.
-const PORTS = join(PSTACK, "harness");
 const ports = existsSync(PORTS)
   ? readdirSync(PORTS)
       .filter((tree) => existsSync(join(PORTS, tree, "port.json")))
