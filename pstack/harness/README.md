@@ -7,6 +7,7 @@ This fork of `cursor/plugins` adds ports of pstack to harnesses upstream does no
 | omp | `harness/pstack/omp/` | `pstack/docs/harness/omp.md` |
 | Antigravity | `harness/pstack/antigravity/` | `pstack/docs/harness/antigravity.md` |
 | OpenCode | `harness/pstack/opencode/` | `pstack/docs/harness/opencode.md` |
+| ZCode | `harness/pstack/zcode/` | `pstack/docs/harness/zcode.md` |
 
 ## How a port is built
 
@@ -121,3 +122,20 @@ grep 'plugin.id=pstack' ~/.local/share/opencode/log/opencode.log | tail -3
 ```
 
 The agents include `poteto-agent` and `comment-sicko`, and the commands include `poteto-mode`. A log line that says `disabled plugin after transform failure` names the field OpenCode rejected.
+
+## ZCode
+
+ZCode reads skills from `~/.zcode/skills/` and runs `SessionStart` hooks from `~/.zcode/cli/config.json`. `install.sh` links the tree at `~/.zcode/pstack`, links each skill into `~/.zcode/skills/`, seeds `~/.zcode/pstack-models.md` when it is missing, and registers `hooks/pstack-session-start.sh`, which injects the mandate unless the sheet says `session hook: off`. It replaces an earlier pstack hook entry and leaves the rest of the config alone, so a rerun is safe.
+
+Do not install pstack into `~/.agents/skills/` for ZCode. OpenCode reads that folder too, and its copy there would shadow the OpenCode plugin's.
+
+Install:
+
+```sh
+git clone https://github.com/quocson95/plugins ~/.local/share/quocson95-plugins
+sh ~/.local/share/quocson95-plugins/harness/pstack/zcode/install.sh
+```
+
+Release a sync with `git -C ~/.local/share/quocson95-plugins pull`, then rerun `install.sh` to link any new skill.
+
+Check with `zcode skills list`. Every pstack skill shows as `(user/zcode)`. Then open a new session and ask it to quote the pstack mandate.
