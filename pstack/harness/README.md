@@ -31,9 +31,10 @@ The script fetches `upstream`, merges `upstream/main`, regenerates `harness/psta
 
 Conflicts land in the few upstream files this fork edits:
 
-- `scripts/generate-pstack-harness-trees.mjs` holds the port discovery and the multi-tree loop. Keep both upstream's change and the `ports` discovery.
+- `scripts/generate-pstack-harness-trees.mjs` holds the port discovery, the multi-tree loop, and the Claude Code overlay. Keep upstream's change, the `ports` discovery, and the `overlay` line on `CLAUDE_CODE`.
 - `scripts/validate-plugins.mjs` holds the `.omp-plugin/marketplace.json` check.
-- `pstack/README.md` and `pstack/docs/guide/01-setup.md` each hold one paragraph that links here.
+- `pstack/README.md` and `pstack/docs/guide/01-setup.md` each hold one paragraph that links here. `pstack/README.md` also holds the `/session-summary` row in the skills table.
+- `pstack/docs/guide/03-understand.md` holds the `/session-summary` section after the `/recall` one.
 - `.github/workflows/validate-plugins.yml` holds one path line.
 
 `pstack/harness/claude-code/` is not a port. It has no `port.json`, and the generator copies it over upstream's Claude Code tree. It holds this fork's Claude Code hooks.
