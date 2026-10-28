@@ -11,14 +11,21 @@
  *
  * The model sheet (`pstack-models.md` in the omp agent directory) is read the
  * same way, so the per-role model choices a user recorded apply everywhere.
+ *
+ * It also runs the session-summary skill's hooks: the nudge to pick a summary
+ * folder while none is saved, and the digest written on `session_shutdown`.
  */
 
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { writeDigest } from "../skills/session-summary/scripts/digest.mjs";
+import { startNudge } from "../skills/session-summary/scripts/summary-dir.mjs";
 
 const PLUGIN_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const SUMMARY_SKILL = join(PLUGIN_ROOT, "skills", "session-summary", "SKILL.md");
+const EDIT_TOOLS = new Set(["edit", "write"]);
 
 /**
  * The mandate omp injects. It is the same shape as the Claude Code and Codex
@@ -85,7 +92,55 @@ function isMainSession(ctx): boolean {
 	return agent.kind === undefined || agent.kind === "main";
 }
 
+function text(content): string {
+	if (typeof content === "string") return content;
+	if (!Array.isArray(content)) return "";
+	return content.filter((part) => part?.type === "text").map((part) => part.text).join("\n");
+}
+
+/** Reads the session's entries into the Session shape the session-summary digest takes. */
+function summarize(ctx) {
+	const manager = ctx.sessionManager;
+	const header = manager.getHeader?.();
+	const session = {
+		harness: "omp",
+		id: manager.getSessionId?.() ?? header?.id ?? "unknown",
+		cwd: ctx.cwd ?? header?.cwd ?? process.cwd(),
+		startedAt: header?.timestamp,
+		transcript: manager.getSessionFile?.(),
+		prompts: [] as string[],
+		files: [] as string[],
+		commands: 0,
+		lastReply: "",
+	};
+	for (const entry of manager.getEntries()) {
+		if (entry.type !== "message") continue;
+		const message = entry.message;
+		if (message?.role === "user" && !message.synthetic) {
+			const prompt = text(message.content).trim();
+			if (prompt) session.prompts.push(prompt);
+		} else if (message?.role === "assistant" && Array.isArray(message.content)) {
+			for (const part of message.content) {
+				if (part.type === "text" && part.text.trim()) session.lastReply = part.text;
+				if (part.type !== "toolCall") continue;
+				if (part.name === "bash") session.commands++;
+				if (EDIT_TOOLS.has(part.name) && part.arguments?.path) session.files.push(part.arguments.path);
+			}
+		}
+	}
+	return session;
+}
+
 export default function pstack(pi) {
+	// omp gives shutdown handlers two seconds. The entries are already in memory, so this stays well under it.
+	pi.on("session_shutdown", (_event, ctx) => {
+		try {
+			if (isMainSession(ctx)) writeDigest(summarize(ctx));
+		} catch (error) {
+			console.error(`pstack session-summary: ${error.message}`);
+		}
+	});
+
 	pi.on("before_agent_start", (event, ctx) => {
 		const systemPrompt = event.systemPrompt;
 		if (!Array.isArray(systemPrompt) || systemPrompt.length === 0) return;
@@ -99,8 +154,10 @@ export default function pstack(pi) {
 		// sees CLAUDE.md, but not the mandate: the session start does not run for
 		// subagents.
 		const sections: string[] = [];
-		if (!hookOff(sheet) && isMainSession(ctx)) {
-			sections.push(MANDATE);
+		if (isMainSession(ctx)) {
+			if (!hookOff(sheet)) sections.push(MANDATE);
+			const nudge = startNudge(SUMMARY_SKILL);
+			if (nudge) sections.push(nudge);
 		}
 		sections.push(adapterNote());
 		if (sheet) sections.push(sheet);
