@@ -1,0 +1,25 @@
+name: Publish pstack Antigravity branch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "harness/pstack/antigravity/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # agy plugin install needs plugin.json at the root of the URL it clones.
+      - name: Split the Antigravity tree onto its own branch
+        run: |
+          git subtree split --prefix=harness/pstack/antigravity -b pstack-antigravity
+          git push origin pstack-antigravity
