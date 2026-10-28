@@ -70,7 +70,7 @@ If you want to resume one specific chat, that's the Session pickup playbook belo
 /session-summary
 ```
 
-[`/session-summary`](../../skills/session-summary/SKILL.md) writes what this session did to a markdown file in your own notes folder: the goal, what changed with its evidence, the decisions, what was verified, and what is still open. The first run asks where to save summaries and reuses that folder after. Each project gets its own subfolder. Outside Cursor, a session-end hook also saves a shorter digest of every session there. It is the write side of `/recall`. Point the next chat at the file to start from where this one stopped.
+[`/session-summary`](../../skills/session-summary/SKILL.md) writes what this session did to a markdown file in your own notes folder: the goal, what changed with its evidence, the decisions, what was verified, and what is still open. The first run asks where to save summaries and reuses that folder after. Each project gets its own subfolder. In Claude Code, omp, OpenCode, and ZCode, a hook also saves a shorter digest of every session there. It is the write side of `/recall`. Point the next chat at the file to start from where this one stopped.
 
 ## Take over prior work with Session pickup
 

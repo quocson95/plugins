@@ -138,7 +138,7 @@ The agents include `poteto-agent` and `comment-sicko`, and the commands include 
 
 ## ZCode
 
-ZCode reads skills from `~/.zcode/skills/` and runs `SessionStart` hooks from `~/.zcode/cli/config.json`. `install.sh` links the tree at `~/.zcode/pstack`, links each skill into `~/.zcode/skills/`, seeds `~/.zcode/pstack-models.md` when it is missing, and registers `hooks/pstack-session-start.sh`, which injects the mandate unless the sheet says `session hook: off`. It replaces an earlier pstack hook entry and leaves the rest of the config alone, so a rerun is safe.
+ZCode reads skills from `~/.zcode/skills/` and runs `SessionStart` hooks from `~/.zcode/cli/config.json`. `install.sh` links the tree at `~/.zcode/pstack`, links each skill into `~/.zcode/skills/`, seeds `~/.zcode/pstack-models.md` when it is missing, and registers `hooks/pstack-session-start.sh`, which injects the mandate unless the sheet says `session hook: off`, plus the session-summary `SessionStart` and `Stop` hooks in `hooks/session-summary.mjs`. It replaces earlier pstack hook entries and leaves the rest of the config alone, so a rerun is safe.
 
 Do not install pstack into `~/.agents/skills/` for ZCode. OpenCode reads that folder too, and its copy there would shadow the OpenCode plugin's.
 
@@ -157,6 +157,16 @@ Check with `zcode skills list`. Every pstack skill shows as `(user/zcode)`. Then
 
 The `session-summary` skill ships in every tree. It writes a summary of the session to a folder the user picks once. `skills/session-summary/scripts/summary-dir.mjs` stores that folder in `~/.config/pstack/session-summary.json`, so the skill and every hook share it. `PSTACK_SESSION_SUMMARY_DIR` overrides it for one shell. Each project gets its own subfolder, named after its git root.
 
-In Claude Code, `pstack/harness/claude-code/hooks/` adds two hooks. On a new session with no folder saved, `SessionStart` asks the model to get one from the user, or `off`. `SessionEnd` writes a digest of the transcript to the folder: the prompts, the files edited, and the last reply. A hook cannot ask the user, so it skips while no folder is saved. The hooks need `node` on `PATH`.
+Each harness with hooks runs two of them. While no folder is saved, a session-start nudge asks the model to get one from the user, or `off`. A hook cannot ask the user itself, so the digest skips until a folder is saved. The digest lists the prompts, the files edited, the shell command count, and the last reply. `skills/session-summary/scripts/digest.mjs` renders and saves it, so each harness only reads its own transcript. The file is named by the session's start, so a harness with no session-end event rewrites the same file after every turn.
+
+| Harness | Nudge | Digest | Source |
+| --- | --- | --- | --- |
+| Claude Code | `SessionStart` hook | `SessionEnd` hook | `pstack/harness/claude-code/hooks/session-summary.mjs` reads the transcript JSONL. |
+| omp | system prompt, main session | `session_shutdown` | `extensions/pstack.ts` reads the session manager's entries. omp gives the handler two seconds. |
+| OpenCode | system prompt, main session | each `session.idle` | `server.ts` reads `session.context`. OpenCode has no session-end event. |
+| ZCode | `SessionStart` hook | each `Stop` | `hooks/session-summary.mjs` reads `~/.zcode/cli/db/db.sqlite` read-only. ZCode has no session-end hook, and its `transcript_path` holds one message. |
+| Antigravity | none | none | The skill only. |
+
+The hooks need `node` on `PATH`. The ZCode hook needs Node 22.13 or later, for `node:sqlite`.
 
 Change the folder with `node <tree>/skills/session-summary/scripts/summary-dir.mjs set <dir>`, or turn summaries off with `set off`.
