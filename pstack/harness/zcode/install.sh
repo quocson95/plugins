@@ -1,6 +1,6 @@
 #!/bin/sh
 # Installs this tree into ZCode: links it at ~/.zcode/pstack, links each skill into ~/.zcode/skills,
-# and registers the SessionStart hook in ~/.zcode/cli/config.json. Safe to rerun.
+# and registers the pstack hooks in ~/.zcode/cli/config.json. Safe to rerun.
 set -eu
 
 tree=$(cd "$(dirname "$0")" && pwd)
@@ -26,17 +26,27 @@ python3 - "$root/cli/config.json" <<'PY'
 import json, os, sys
 path = sys.argv[1]
 config = json.load(open(path)) if os.path.exists(path) else {}
-command = 'sh "$HOME/.zcode/pstack/hooks/pstack-session-start.sh"'
+pstack = '"$HOME/.zcode/pstack/hooks'
+# event, matcher, the script that identifies an earlier pstack entry, command, timeout, status message
+HOOKS = [
+    ("SessionStart", "startup|resume|clear|compact", "pstack-session-start.sh", f'sh {pstack}/pstack-session-start.sh"', 10, "pstack session start"),
+    ("SessionStart", "startup", "session-summary.mjs", f'node {pstack}/session-summary.mjs" start', 10, "pstack session summary"),
+    ("Stop", None, "session-summary.mjs", f'node {pstack}/session-summary.mjs" stop', 30, "pstack session summary"),
+]
 hooks = config.setdefault("hooks", {})
 hooks["enabled"] = True
-starts = hooks.setdefault("events", {}).setdefault("SessionStart", [])
-for group in starts:
-    group["hooks"] = [h for h in group.get("hooks", []) if "pstack-session-start.sh" not in h.get("command", "")]
-starts[:] = [g for g in starts if g["hooks"]]
-starts.append({
-    "matcher": "startup|resume|clear|compact",
-    "hooks": [{"type": "command", "command": command, "timeout": 10, "statusMessage": "pstack session start"}],
-})
+events = hooks.setdefault("events", {})
+for event in {hook[0] for hook in HOOKS}:
+    groups = events.setdefault(event, [])
+    scripts = [hook[2] for hook in HOOKS if hook[0] == event]
+    for group in groups:
+        group["hooks"] = [h for h in group.get("hooks", []) if not any(s in h.get("command", "") for s in scripts)]
+    groups[:] = [g for g in groups if g["hooks"]]
+for event, matcher, _, command, timeout, status in HOOKS:
+    group = {"hooks": [{"type": "command", "command": command, "timeout": timeout, "statusMessage": status}]}
+    if matcher:
+        group = {"matcher": matcher, **group}
+    events[event].append(group)
 json.dump(config, open(path, "w"), indent=2)
 PY
 

@@ -11,6 +11,9 @@
  *    OpenCode adapter, and the per-role model sheet. A child session gets the
  *    adapter and the sheet, as a Claude Code subagent sees CLAUDE.md, but not
  *    the mandate: the chat that owns the playbook is the main one.
+ * 4. Run the session-summary skill's hooks: the nudge to pick a summary folder
+ *    while none is saved, and the digest. OpenCode has no session-end event, so
+ *    the digest is rewritten each time a main session goes idle.
  *
  * A local plugin directory loads through this package's `exports`. Everything
  * here is plain JavaScript at runtime: the `@opencode/plugin` import is a type
@@ -22,11 +25,16 @@ import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { writeDigest } from "./skills/session-summary/scripts/digest.mjs"
+import { startNudge } from "./skills/session-summary/scripts/summary-dir.mjs"
 
 const PLUGIN_ROOT = dirname(fileURLToPath(import.meta.url))
 const SKILLS = join(PLUGIN_ROOT, "skills")
 const AGENTS = join(PLUGIN_ROOT, "agents")
 const ADAPTER = join(PLUGIN_ROOT, "docs", "harness", "opencode.md")
+const SUMMARY_SKILL = join(SKILLS, "session-summary", "SKILL.md")
+const EDIT_TOOLS = new Set(["edit", "write"])
+const SHELL_TOOLS = new Set(["shell", "bash"])
 
 /** Subagents whose own prompt says they never write code. Enforced, not just asked. */
 const READONLY_AGENTS = new Set(["comment-sicko"])
@@ -184,6 +192,33 @@ function adapterNote(): string {
   return `pstack skills are written for Cursor. When one names a Cursor tool (Task, AskQuestion, a todolist), a bundled skill, or a Cursor model, read ${ADAPTER} for the OpenCode equivalent before following it.`
 }
 
+/** Reads a session's messages into the Session shape the session-summary digest takes. */
+function summarize(info: any, messages: any[], directory: string) {
+  const session = {
+    harness: "OpenCode",
+    id: String(info.id),
+    cwd: info.location?.directory ?? directory,
+    startedAt: info.time?.created,
+    prompts: [] as string[],
+    files: [] as string[],
+    commands: 0,
+    lastReply: "",
+  }
+  for (const message of messages) {
+    if (message.type === "user" && message.text?.trim()) session.prompts.push(message.text)
+    if (message.type === "shell") session.commands++
+    if (message.type !== "assistant" || !Array.isArray(message.content)) continue
+    for (const part of message.content) {
+      if (part.type === "text" && part.text?.trim()) session.lastReply = part.text
+      if (part.type !== "tool") continue
+      if (SHELL_TOOLS.has(part.name)) session.commands++
+      const path = part.state?.input?.path ?? part.state?.input?.file_path
+      if (EDIT_TOOLS.has(part.name) && path) session.files.push(path)
+    }
+  }
+  return session
+}
+
 const pstack: Plugin.Plugin = {
   id: "pstack",
 
@@ -241,27 +276,48 @@ const pstack: Plugin.Plugin = {
     // A child session is created with a parent, and its parentID never changes,
     // so one lookup per session is enough.
     const mainSessions = new Map<string, boolean>()
-
-    await ctx.session.hook("context", async (event) => {
-      if (!mainSessions.has(event.sessionID)) {
+    const isMain = async (sessionID: string) => {
+      if (!mainSessions.has(sessionID)) {
         let main = true
         try {
-          main = !(await ctx.session.get({ sessionID: event.sessionID })).parentID
+          main = !(await ctx.session.get({ sessionID })).parentID
         } catch {
           // An unavailable lookup should not cost the main session its mandate.
         }
         if (mainSessions.size > 500) mainSessions.clear()
-        mainSessions.set(event.sessionID, main)
+        mainSessions.set(sessionID, main)
       }
+      return mainSessions.get(sessionID)
+    }
 
+    await ctx.session.hook("context", async (event) => {
+      const main = await isMain(event.sessionID)
       const sheet = readSheet()
       const sections: string[] = []
-      if (mainSessions.get(event.sessionID) && !hookOff(sheet)) sections.push(MANDATE)
+      if (main && !hookOff(sheet)) sections.push(MANDATE)
+      const nudge = main && startNudge(SUMMARY_SKILL)
+      if (nudge) sections.push(nudge)
       sections.push(adapterNote())
       if (sheet) sections.push(sheet)
 
       event.system.push({ type: "text", text: sections.join("\n\n") })
     })
+
+    const unload = new AbortController()
+    void (async () => {
+      for await (const event of ctx.event.subscribe({ types: ["session.idle"], signal: unload.signal })) {
+        if (event.type !== "session.idle") continue
+        const sessionID = event.data.sessionID
+        try {
+          if (!(await isMain(sessionID))) continue
+          const [info, messages] = await Promise.all([ctx.session.get({ sessionID }), ctx.session.context({ sessionID })])
+          writeDigest(summarize(info, messages, ctx.location.directory))
+        } catch (error) {
+          console.error(`pstack session-summary: ${(error as Error).message}`)
+        }
+      }
+    })().catch(() => {})
+    return () => unload.abort()
   },
 }
 

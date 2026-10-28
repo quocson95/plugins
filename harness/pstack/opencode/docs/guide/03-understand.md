@@ -64,6 +64,14 @@ Teaching helps the agent as much as you. An agent that has to explain its work m
 
 If you want to resume one specific chat, that's the Session pickup playbook below, not `/recall`.
 
+## Save a session with `/session-summary`
+
+```text
+/session-summary
+```
+
+[`/session-summary`](../../skills/session-summary/SKILL.md) writes what this session did to a markdown file in your own notes folder: the goal, what changed with its evidence, the decisions, what was verified, and what is still open. The first run asks where to save summaries and reuses that folder after. Each project gets its own subfolder. In Claude Code, omp, OpenCode, and ZCode, a hook also saves a shorter digest of every session there. It is the write side of `/recall`. Point the next chat at the file to start from where this one stopped.
+
 ## Take over prior work with Session pickup
 
 When another agent (or you, last week) left a branch mid-flight:
