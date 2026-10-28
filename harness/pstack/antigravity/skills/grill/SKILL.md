@@ -1,7 +1,6 @@
 ---
 name: grill
 description: "Interview the user in rounds until a plan has no silent assumptions, and write the project's domain language and hard-to-reverse decisions down as they settle (GLOSSARY.md, docs/adr/). Use for /grill, 'grill me', 'stress-test this plan', or before a Feature or multi-phase plan whose product calls are still open."
-disable-model-invocation: true
 ---
 
 # Grill

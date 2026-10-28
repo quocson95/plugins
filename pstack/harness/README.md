@@ -83,7 +83,17 @@ omp -p --no-session "What subagent names are available to you?"
 
 `rules/AGENTS.md` carries the poteto-mode mandate and the adapter pointer. Antigravity inlines it into every session while the plugin is active. `plugin.json` is the manifest.
 
-Install into a workspace or for every project:
+Install with `agy`:
+
+```sh
+agy plugin install https://github.com/quocson95/plugins/tree/pstack-antigravity
+```
+
+`agy` needs `plugin.json` at the root of the repository it clones, so `.github/workflows/publish-pstack-antigravity.yml` splits `harness/pstack/antigravity/` onto the `pstack-antigravity` branch on every push to `main` that changes it. Rerun the install command to update.
+
+Antigravity hides every skill whose frontmatter sets `disable-model-invocation: true`, so `port.json` strips that line. Every pstack skill is model-invocable in Antigravity.
+
+Or copy the tree into a workspace or for every project:
 
 ```sh
 mkdir -p .agents/plugins && cp -r <path-to>/harness/pstack/antigravity .agents/plugins/pstack
