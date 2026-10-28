@@ -36,6 +36,8 @@ Conflicts land in the few upstream files this fork edits:
 - `pstack/README.md` and `pstack/docs/guide/01-setup.md` each hold one paragraph that links here.
 - `.github/workflows/validate-plugins.yml` holds one path line.
 
+`pstack/harness/claude-code/` is not a port. It has no `port.json`, and the generator copies it over upstream's Claude Code tree. It holds this fork's Claude Code hooks.
+
 Every other port file lives in this folder or under `pstack/docs/harness/`, which upstream never touches.
 
 When the generator fails after a merge, the message names the fix:
@@ -149,3 +151,11 @@ sh ~/.local/share/quocson95-plugins/harness/pstack/zcode/install.sh
 Release a sync with `git -C ~/.local/share/quocson95-plugins pull`, then rerun `install.sh` to link any new skill.
 
 Check with `zcode skills list`. Every pstack skill shows as `(user/zcode)`. Then open a new session and ask it to quote the pstack mandate.
+
+## Session summaries
+
+The `session-summary` skill ships in every tree. It writes a summary of the session to a folder the user picks once. `skills/session-summary/scripts/summary-dir.mjs` stores that folder in `~/.config/pstack/session-summary.json`, so the skill and every hook share it. `PSTACK_SESSION_SUMMARY_DIR` overrides it for one shell. Each project gets its own subfolder, named after its git root.
+
+In Claude Code, `pstack/harness/claude-code/hooks/` adds two hooks. On a new session with no folder saved, `SessionStart` asks the model to get one from the user, or `off`. `SessionEnd` writes a digest of the transcript to the folder: the prompts, the files edited, and the last reply. A hook cannot ask the user, so it skips while no folder is saved. The hooks need `node` on `PATH`.
+
+Change the folder with `node <tree>/skills/session-summary/scripts/summary-dir.mjs set <dir>`, or turn summaries off with `set off`.
