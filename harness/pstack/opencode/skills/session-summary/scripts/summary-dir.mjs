@@ -35,6 +35,17 @@ export function writeDir(value) {
   return dir;
 }
 
+// What a harness's session-start hook injects while no folder is saved, or undefined once one is.
+// `skill` is the path to this skill's SKILL.md in the harness's tree.
+export function startNudge(skill) {
+  if (readDir() !== undefined) return undefined;
+  return (
+    "pstack session summaries have no folder yet. At the first natural pause in this session, not in the middle of the user's task, " +
+    `follow "Find the folder" in ${skill} to ask the user once where to save them, or "off". ` +
+    "Once saved, the end of every session writes a summary there."
+  );
+}
+
 // One subfolder per project, named after the git root, so summaries from different repos never mix.
 export function project(cwd = process.cwd()) {
   try {
