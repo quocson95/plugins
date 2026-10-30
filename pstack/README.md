@@ -52,7 +52,7 @@ pick `/poteto-mode` from the `/` menu before you type your task, so cursor attac
 
 ### just use [`/poteto-mode`](./skills/poteto-mode/SKILL.md)
 
-this skill is the main shortcut. i use it whenever i need the agent to do rigorous engineering work. it comes with twenty-three playbooks:
+this skill is the main shortcut. i use it whenever i need the agent to do rigorous engineering work. it comes with twenty-four playbooks:
 
 ```
 /poteto-mode this pr has a subtle bug where the scroll drifts every 750ms even when idle. repro
@@ -65,13 +65,14 @@ morning.
 ```
 
 <details>
-<summary>the twenty-three playbooks</summary>
+<summary>the twenty-four playbooks</summary>
 
 | playbook | for |
 |---|---|
 | [investigation](./skills/poteto-mode/playbooks/investigation.md) | a read-only question. how does x work, why was y built this way, are we sure. |
 | [bug fix](./skills/poteto-mode/playbooks/bug-fix.md) | reproduce a defect, root-cause it, and fix with runtime evidence. |
 | [perf](./skills/poteto-mode/playbooks/perf-issue.md) | trace a measured slowness and improve it against a baseline. |
+| [benchmark build](./skills/poteto-mode/playbooks/benchmark-build.md) | build a rerunnable, user-approved harness and baseline for an app metric that has no measurement yet. |
 | [hillclimb](./skills/poteto-mode/playbooks/hillclimb.md) | sustained, scientific improvement of one metric against a target, looping hypotheses with before/after measurement and one commit per accepted win. |
 | [runtime forensics](./skills/poteto-mode/playbooks/runtime-forensics.md) | diagnose a live symptom (leak, idle-cpu spin, glitch) from instrumentation. |
 | [trace forensics](./skills/poteto-mode/playbooks/trace-forensics.md) | diagnose a captured profiling artifact (cpuprofile, trace, spindump, heap snapshot). |
