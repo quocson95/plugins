@@ -27,6 +27,8 @@ pstack skills use Cursor names. In Claude Code, read this file once per session,
 | `resume` | Spawn a new agent and paste the earlier result into its brief. |
 | `file_attachments` | List the paths in the brief. |
 
+A task notification whose summary says an agent "is waiting on its own background work" is not its report, and no later notification is sure to come. Read the last assistant message in its transcript under `<session>/subagents/`. When that message is the final report, act on it and stop the agent with `TaskStop`.
+
 ## Models
 
 | Cursor | Claude Code |
