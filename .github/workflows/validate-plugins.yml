@@ -34,3 +34,6 @@ jobs:
 
       - name: Test pstack skill scripts
         run: node --disable-warning=ExperimentalWarning --test pstack/skills/*/scripts/test/*.test.ts
+
+      - name: Test pstack Claude Code hooks
+        run: node --test pstack/harness/claude-code/hooks/test/*.test.mjs
