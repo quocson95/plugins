@@ -17,7 +17,7 @@ pstack skills use Cursor names. In ZCode, read this file once per session, then 
 | Cursor | ZCode |
 | --- | --- |
 | `subagent_type: generalPurpose` | `subagent_type: "general-purpose"` |
-| `poteto-agent`, `comment-sicko` | `subagent_type: "poteto-agent"` or `"comment-sicko"` when `.zcode/agents/` defines them. Otherwise `general-purpose`, and paste the agent file's body at the top of the brief. |
+| `poteto-agent`, `comment-sicko` | `subagent_type: "poteto-agent"` or `"comment-sicko"`. The pstack install links both into `~/.zcode/agents/`, so they resolve in every workspace. If one is missing, `general-purpose`, and paste the agent file's body at the top of the brief. |
 | `readonly: true` | `subagent_type: "Explore"`. The brief also says "do not edit files", and you check `git status` afterward. |
 | `readonly: false` | `general-purpose`. |
 | `environment: "cloud"` | Create a worktree with `git worktree add`, give the worker that directory, and name the branch or commit it checks out. |

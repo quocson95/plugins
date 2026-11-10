@@ -1,11 +1,12 @@
 #!/bin/sh
 # Installs this tree into ZCode: links it at ~/.zcode/pstack, links each skill into ~/.zcode/skills,
-# and registers the pstack hooks in ~/.zcode/cli/config.json. Safe to rerun.
+# links each agent into ~/.zcode/agents, and registers the pstack hooks in ~/.zcode/cli/config.json.
+# Safe to rerun.
 set -eu
 
 tree=$(cd "$(dirname "$0")" && pwd)
 root="${ZCODE_CONFIG_DIR:-$HOME/.zcode}"
-mkdir -p "$root/skills" "$root/cli"
+mkdir -p "$root/skills" "$root/agents" "$root/cli"
 
 ln -sfn "$tree" "$root/pstack"
 for dir in "$tree"/skills/*/; do
@@ -16,6 +17,17 @@ for dir in "$tree"/skills/*/; do
     continue
   fi
   ln -sfn "${dir%/}" "$target"
+done
+
+for file in "$tree"/agents/*.md; do
+  [ -e "$file" ] || continue
+  name=$(basename "$file")
+  target="$root/agents/$name"
+  if [ -e "$target" ] && [ ! -L "$target" ]; then
+    echo "skip $name: $target is a real file" >&2
+    continue
+  fi
+  ln -sfn "$file" "$target"
 done
 
 if [ ! -f "$root/pstack-models.md" ]; then
