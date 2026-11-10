@@ -12,6 +12,20 @@ on:
       - "harness/**"
       - "scripts/**"
       - ".github/workflows/validate-plugins.yml"
+      - "cursor-team-kit/skills/**"
+  push:
+    branches: [main]
+    paths:
+      - ".cursor-plugin/marketplace.json"
+      - ".claude-plugin/marketplace.json"
+      - ".omp-plugin/marketplace.json"
+      - "**/plugin.json"
+      - "schemas/**"
+      - "pstack/**"
+      - "harness/**"
+      - "scripts/**"
+      - ".github/workflows/validate-plugins.yml"
+      - "cursor-team-kit/skills/**"
 
 jobs:
   validate:
@@ -31,6 +45,9 @@ jobs:
 
       - name: Check generated pstack harness trees
         run: node scripts/generate-pstack-harness-trees.mjs --check
+
+      - name: Check pstack docs
+        run: node scripts/check-pstack-docs.mjs
 
       - name: Test pstack skill scripts
         run: node --disable-warning=ExperimentalWarning --test pstack/skills/*/scripts/test/*.test.ts
