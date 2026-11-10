@@ -21,6 +21,15 @@ if [[ ! -f "$STATE_FILE" ]]; then
   exit 0
 fi
 
+source "$(dirname "$0")/lib.sh"
+ralph_bind_conversation "$HOOK_INPUT" "$STATE_FILE" || exit 0
+
+# An aborted or failed turn is not an iteration. Leave the loop for the next completed turn.
+STATUS=$(jq -r '.status // empty' <<< "$HOOK_INPUT" 2>/dev/null || true)
+if [[ -n "$STATUS" ]] && [[ "$STATUS" != "completed" ]]; then
+  exit 0
+fi
+
 # Parse state file frontmatter
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$STATE_FILE")
 ITERATION=$(echo "$FRONTMATTER" | grep '^iteration:' | sed 's/iteration: *//')

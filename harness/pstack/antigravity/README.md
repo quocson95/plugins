@@ -21,7 +21,7 @@ fork it. improve it. make it yours. PRs are welcome!
 in claude code:
 
 ```bash
-/plugin marketplace add cursor/plugins
+/plugin marketplace add quocson95/plugins
 /plugin install pstack@cursor-plugins
 ```
 

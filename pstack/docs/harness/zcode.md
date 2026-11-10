@@ -43,7 +43,7 @@ The `Agent` tool has no `model` or `effort` parameter. Apply a role's model by p
 Follow its steps with these changes:
 
 - Detect. The detected models are the ones the ZCode model picker lists for this account, such as `glm-5.3` and `glm-5.3-flash`.
-- Write. Write `~/.zcode/pstack-models.md`, then replace the role lines inside `~/.zcode/AGENTS.md` with the same lines. Never touch `~/.claude/`.
+- Write. Write `~/.zcode/pstack-models.md`, then replace the role lines inside `~/.zcode/AGENTS.md` with the same lines. A `session hook: off` line in the sheet stops the session-start mandate. If the old file has a `session hook:` line, write it back unchanged as the last line. Never touch `~/.claude/`.
 
 ## Paths
 

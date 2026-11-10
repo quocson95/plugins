@@ -51,7 +51,7 @@ omp has no always-applied rule file that names a model sheet, so the pstack omp 
 
 - Detect. The detected models are the selectors `omp models` lists, each with the thinking levels that model supports. A role value is `provider/model:level`.
 - Defaults. Map each default slug with the rows above. A family omp cannot reach becomes `inherit-parent`, which runs the role on the session model.
-- Write. Write `~/.omp/agent/pstack-models.md` with no frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file. The extension injects the role lines into every session, so no include line is needed.
+- Write. Write `~/.omp/agent/pstack-models.md` with no frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file. A `session hook: off` line in the sheet stops the session-start mandate. If the old file has a `session hook:` line, write it back unchanged as the last line. The extension injects the role lines into every session, so no include line is needed.
 
 ## Paths
 
