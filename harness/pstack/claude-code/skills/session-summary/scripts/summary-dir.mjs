@@ -21,9 +21,16 @@ function expand(path) {
 
 // The saved folder, "off", or undefined when the user has not answered yet.
 export function readDir() {
-  if (process.env.PSTACK_SESSION_SUMMARY_DIR) return expand(process.env.PSTACK_SESSION_SUMMARY_DIR);
+  const override = process.env.PSTACK_SESSION_SUMMARY_DIR;
+  if (override) return override === "off" ? "off" : expand(override);
   if (!existsSync(CONFIG)) return undefined;
-  const { dir } = JSON.parse(readFileSync(CONFIG, "utf8"));
+  let dir;
+  try {
+    ({ dir } = JSON.parse(readFileSync(CONFIG, "utf8")) ?? {});
+  } catch {
+    // An unreadable config is the same as none: the skill asks again and `set` rewrites it.
+    return undefined;
+  }
   if (dir === "off") return "off";
   return typeof dir === "string" && dir ? expand(dir) : undefined;
 }
@@ -46,7 +53,7 @@ export function startNudge(skill) {
   );
 }
 
-// One subfolder per project, named after the git root, so summaries from different repos never mix.
+// One subfolder per project, named after the git root's folder. Two repos with the same folder name share one.
 export function project(cwd = process.cwd()) {
   try {
     return basename(execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim());
