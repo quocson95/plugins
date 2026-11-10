@@ -20,6 +20,9 @@ if [[ ! -f "$STATE_FILE" ]]; then
   exit 0
 fi
 
+source "$(dirname "$0")/lib.sh"
+ralph_bind_conversation "$HOOK_INPUT" "$STATE_FILE" || exit 0
+
 # Extract completion promise from state file frontmatter
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$STATE_FILE")
 COMPLETION_PROMISE=$(echo "$FRONTMATTER" | grep '^completion_promise:' | sed 's/completion_promise: *//' | sed 's/^"\(.*\)"$/\1/')
