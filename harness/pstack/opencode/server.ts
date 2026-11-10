@@ -41,7 +41,7 @@ const READONLY_AGENTS = new Set(["comment-sicko"])
 
 /**
  * The mandate every pstack harness injects. It is the same shape as the Claude
- * Code, Codex, omp, and Antigravity text, so one session reads the same
+ * Code, omp, ZCode, and Antigravity text, so one session reads the same
  * whichever harness runs it.
  */
 const MANDATE = `<EXTREMELY_IMPORTANT>

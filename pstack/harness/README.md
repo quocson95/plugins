@@ -35,9 +35,13 @@ Conflicts land in the few upstream files this fork edits:
 - `scripts/validate-plugins.mjs` holds the `.omp-plugin/marketplace.json` check.
 - `pstack/README.md` and `pstack/docs/guide/01-setup.md` each hold one paragraph that links here. `pstack/README.md` also holds the `/session-summary` row in the skills table.
 - `pstack/docs/guide/03-understand.md` holds the `/session-summary` section after the `/recall` one.
-- `.github/workflows/validate-plugins.yml` holds one path line.
+- `.github/workflows/validate-plugins.yml` holds the `push` trigger, two path lines, and the docs check step.
+- `pstack/docs/harness/claude-code.md` holds the `session hook:` sentence in its Write rule.
+- `pstack/README.md`, `pstack/docs/guide/01-setup.md`, and `pstack/skills/poteto-help/SKILL.md` name `quocson95/plugins` as the Claude Code marketplace and the public copy.
 
-`pstack/harness/claude-code/` is not a port. It has no `port.json`, and the generator copies it over upstream's Claude Code tree. It holds this fork's Claude Code hooks.
+`pstack/harness/claude-code/` is not a port. It has no `port.json`, and the generator copies it over upstream's Claude Code tree. It holds this fork's Claude Code hooks: `hooks/session-start.mjs` injects the poteto-mode mandate from `hooks/session-start-context.md`, and `hooks/session-summary.mjs` runs the session-summary nudge and digest.
+
+Every tree but Antigravity's reads a `session hook: off` line in its model sheet and then skips the mandate. Each adapter's Write rule tells `/setup-pstack` to keep that line.
 
 Every other port file lives in this folder or under `pstack/docs/harness/`, which upstream never touches.
 

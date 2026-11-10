@@ -28,7 +28,7 @@ const SUMMARY_SKILL = join(PLUGIN_ROOT, "skills", "session-summary", "SKILL.md")
 const EDIT_TOOLS = new Set(["edit", "write"]);
 
 /**
- * The mandate omp injects. It is the same shape as the Claude Code and Codex
+ * The mandate omp injects. It is the same shape as the Claude Code
  * session-start text, so one session reads the same whichever harness runs it.
  */
 const MANDATE = `<EXTREMELY_IMPORTANT>

@@ -52,7 +52,7 @@ OpenCode has no always-applied rule file that names a model sheet, so the pstack
 
 - Detect. The detected models are the selectors `opencode models` lists, each with the variants its model supports. A role value is `provider/model#variant`.
 - Defaults. Map each default slug with the rows above. A family OpenCode cannot reach becomes `inherit-parent`, which runs the role on the session model.
-- Write. Write `~/.config/opencode/pstack-models.md` with no frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file. The plugin injects the role lines into every session, so no include line is needed. Remove a `pstack-models.md` entry from `instructions` in `opencode.json(c)` if one is there, so the sheet arrives once.
+- Write. Write `~/.config/opencode/pstack-models.md` with no frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file. A `session hook: off` line in the sheet stops the session-start mandate. If the old file has a `session hook:` line, write it back unchanged as the last line. The plugin injects the role lines into every session, so no include line is needed. Remove a `pstack-models.md` entry from `instructions` in `opencode.json(c)` if one is there, so the sheet arrives once.
 
 ## Paths
 
