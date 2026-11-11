@@ -2,9 +2,16 @@
 
 Sourced motion specs for interface work. Every duration, curve and spring comes with how it is known, and every pattern ships the CSS, the markup and a reduced-motion fallback.
 
-```bash
-/add-plugin motion-ui
-```
+## Install
+
+| Harness | Install |
+|:--|:--|
+| Cursor | `/add-plugin motion-ui` |
+| Claude Code | `/plugin marketplace add quocson95/plugins`, then `/plugin install motion-ui@cursor-plugins` |
+| ZCode | `sh <checkout>/motion-ui/harness/zcode/install.sh` |
+| pi | `sh <checkout>/motion-ui/harness/pi/install.sh` |
+
+The two scripts link the skills into `~/.zcode/skills/` and `~/.pi/agent/skills/`, so a `git pull` is the update. Details, overrides and the skills-only fallback are in [harness/README.md](harness/README.md).
 
 ## Skills
 
@@ -30,6 +37,11 @@ Each value is marked `verified` (read from a standard, spec or vendor document),
 ```
 motion-ui/
 ├── .cursor-plugin/plugin.json
+├── .claude-plugin/plugin.json
+├── harness/
+│   ├── README.md                 install for Cursor, Claude Code, ZCode, pi
+│   ├── zcode/install.sh          links the skills into ~/.zcode/skills
+│   └── pi/install.sh             links the skills into ~/.pi/agent/skills
 └── skills/
     ├── motion-ui/
     │   ├── SKILL.md

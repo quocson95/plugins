@@ -94,6 +94,11 @@
       "description": "Consult a stronger model before major decisions, when stuck, and before declaring done."
     },
     {
+      "name": "motion-ui",
+      "source": "motion-ui",
+      "description": "Sourced motion specs: 18 interface patterns with exact durations, curves and springs, copy-ready CSS, and an audit workflow."
+    },
+    {
       "name": "gmail",
       "source": "third_party/gmail",
       "description": "Search, read, draft, and manage email."

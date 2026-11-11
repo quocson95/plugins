@@ -1,0 +1,21 @@
+{
+  "name": "motion-ui",
+  "description": "Sourced motion specs for interface work: exact durations, curves and springs for 18 common patterns, each marked verified, observed, derived or recommended, with copy-ready CSS, markup and a reduced-motion fallback.",
+  "version": "1.0.0",
+  "author": {
+    "name": "quocson95"
+  },
+  "homepage": "https://github.com/quocson95/plugins/tree/main/motion-ui",
+  "repository": "https://github.com/quocson95/plugins",
+  "keywords": [
+    "motion",
+    "animation",
+    "transitions",
+    "easing",
+    "spring",
+    "css",
+    "interface",
+    "reduced-motion"
+  ],
+  "skills": "./skills/"
+}
