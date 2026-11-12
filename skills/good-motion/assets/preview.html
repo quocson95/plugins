@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Good Motion: reference preview</title>
+<style>
+  :root { --ink:#121212; --paper:#F2F2F2; --brand:#E74E1B; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 500 15px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header { position: sticky; top: 0; z-index: 10; background: var(--paper); border-bottom: 1px solid rgba(0,0,0,.12); padding: 14px 20px; }
+  h1 { margin: 0 0 10px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; }
+  button {
+    font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 999px;
+    border: 1px solid rgba(0,0,0,.25); background: #fff; cursor: pointer;
+  }
+  button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+  main { padding: 24px 20px 80px; }
+  .stage { display: grid; place-items: center; min-height: 60vh; }
+  .card { width: min(920px, 100%); background: #fff; border: 1px solid rgba(0,0,0,.12); padding: 28px; }
+  #text-stage { width: 100%; height: 320px; }
+  #text-host { font-size: 64px; background: #0B0B0B; border-radius: 12px; padding: 36px 24px; text-align: center; }
+  .hint { color: rgba(0,0,0,.5); font-size: 13px; margin-bottom: 16px; }
+  #selftest { display: none; white-space: pre-wrap; font: 12px/1.5 ui-monospace, monospace; }
+  body[data-selftest="running"] #selftest, body[data-selftest="done"] #selftest { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Good Motion: reference preview</h1>
+  <nav id="nav"></nav>
+</header>
+<main>
+  <p class="hint">Pick a component. Cursors disable the native cursor; press the same button again to unmount it.</p>
+  <div class="stage">
+    <div class="card" id="stage">
+      <div id="text-host"></div>
+      <div id="text-stage"></div>
+    </div>
+  </div>
+  <pre id="selftest"></pre>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script type="module">
+  import {
+    mountCircleRevealLoader,
+    mountGooglyEyeCursor,
+    mountElasticTrailCursor,
+    mountY2KDreamyTextGlow,
+    mountXRayText,
+    mountTextDistortion,
+  } from './good-motion.js';
+
+  const textHost = document.getElementById('text-host');
+  const textStage = document.getElementById('text-stage');
+
+  const builders = {
+    'circle-reveal-loader': () => mountCircleRevealLoader({ gsap: window.gsap, hold: 600 }),
+    'y2k-dreamy-text-glow': () => mountY2KDreamyTextGlow(textHost, {
+      gsap: window.gsap, text: 'DREAMY\nGLOW', fontSize: 76, letterSpacing: -3, color: '#FFFFFF',
+    }),
+    'googly-eye-cursor': () => mountGooglyEyeCursor({ gsap: window.gsap }),
+    'text-distortion': () => mountTextDistortion(textStage, {
+      gsap: window.gsap, text: 'GOOD MOTION', textColor: '#121212', fontFamily: 'Helvetica Neue, Arial, sans-serif',
+    }),
+    'x-ray-text': () => mountXRayText('X-RAY', { usePortal: true, mode: 'fixed', top: 120, left: 40, fontSize: 96 }),
+    'elastic-trail-cursor': () => mountElasticTrailCursor({ gsap: window.gsap }),
+  };
+
+  let current = null;
+  let currentName = null;
+  const nav = document.getElementById('nav');
+
+  const unmount = () => {
+    if (current) current.destroy();
+    current = null;
+    currentName = null;
+    textHost.textContent = '';
+    textHost.removeAttribute('style');
+    textStage.innerHTML = '';
+    document.querySelectorAll('button[data-key]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+  };
+
+  Object.keys(builders).forEach((key) => {
+    const b = document.createElement('button');
+    b.textContent = key;
+    b.dataset.key = key;
+    b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => {
+      const same = currentName === key;
+      unmount();
+      if (same) return;
+      current = builders[key]();
+      currentName = key;
+      b.setAttribute('aria-pressed', 'true');
+    };
+    nav.append(b);
+  });
+
+  const frames = (n) => new Promise((resolve) => {
+    let left = n;
+    const step = () => (--left <= 0 ? resolve(true) : requestAnimationFrame(step));
+    requestAnimationFrame(step);
+  });
+
+  const move = (x, y) => window.dispatchEvent(new PointerEvent('pointermove', { clientX: x, clientY: y, bubbles: true }));
+
+  // ?selftest drives every mount and asserts that time and pointer input change the DOM.
+  if (new URLSearchParams(location.search).has('selftest')) {
+    const results = [];
+    const check = (name, pass, detail) => results.push(`${pass ? 'PASS' : 'FAIL'} ${name}${detail ? ' | ' + detail : ''}`);
+    document.body.dataset.selftest = 'running';
+
+    (async () => {
+      const mount = (key) => {
+        unmount();
+        current = builders[key]();
+        currentName = key;
+        return current;
+      };
+
+      // 1. loader ripples over time
+      const loader = mount('circle-reveal-loader');
+      const layer = loader.element.children[0];
+      const a1 = getComputedStyle(layer).clipPath;
+      await frames(12);
+      const a2 = getComputedStyle(layer).clipPath;
+      check('circle-reveal-loader animates clip-path', a1 !== a2, `${a1} -> ${a2}`);
+
+      // 1b. hold: null keeps the page covered until reveal() is called
+      unmount();
+      let revealed = false;
+      const held = mountCircleRevealLoader({ gsap: window.gsap, hold: null, onComplete: () => { revealed = true; } });
+      await frames(30);
+      const stillCovered = !!document.querySelector('[data-gm="circle-reveal-loader"]');
+      held.reveal();
+      await frames(110);
+      check('circle-reveal-loader waits for reveal()', stillCovered && !document.querySelector('[data-gm="circle-reveal-loader"]') && revealed, `covered=${stillCovered} completed=${revealed}`);
+
+      // 2. y2k stroke changes with the sweep
+      mount('y2k-dreamy-text-glow');
+      const spans = [...textHost.querySelectorAll('span span')];
+      await frames(2);
+      const s1 = spans.map((s) => getComputedStyle(s).webkitTextStrokeWidth);
+      await frames(20);
+      const s2 = spans.map((s) => getComputedStyle(s).webkitTextStrokeWidth);
+      check('y2k-dreamy-text-glow sweeps', s1.some((v, i) => v !== s2[i]), `${spans.length} glyphs`);
+
+      // 3. googly eyes follow the pointer
+      const googly = mount('googly-eye-cursor');
+      await frames(2);
+      const before = getComputedStyle(googly.element).transform;
+      move(320, 240);
+      await frames(24);
+      const after = getComputedStyle(googly.element).transform;
+      check('googly-eye-cursor follows pointer', before !== after, `${before} -> ${after}`);
+
+      // 4. elastic trail dots leave the origin
+      const trail = mount('elastic-trail-cursor');
+      await frames(2);
+      move(300, 300);
+      await frames(20);
+      move(600, 420);
+      await frames(20);
+      const dot = trail.element.children[0];
+      check('elastic-trail-cursor tracks pointer', dot.style.transform !== 'translate3d(0px, 0px, 0px)', dot.style.transform);
+
+      // 5. distortion samples move toward the pointer and the GL canvas exists
+      const dist = mount('text-distortion');
+      const distRect = textStage.getBoundingClientRect();
+      move(distRect.left + distRect.width / 2, distRect.top + distRect.height / 2);
+      await frames(24);
+      const probe = dist.debug;
+      const targetHit = !!probe && Math.abs(probe.state.target.x - 0.5) < 0.02;
+      const followed = !!probe && Math.abs(probe.state.mouse.x - 0.5) < 0.05;
+      const canvas = textStage.querySelector('canvas');
+      check('text-distortion renders a GL canvas', !!canvas && canvas.width > 1 && canvas.height > 1, canvas ? `${canvas.width}x${canvas.height}` : 'none');
+      check('text-distortion pointer reaches shader', targetHit && followed, probe ? `mouse ${probe.state.mouse.x.toFixed(2)} target ${probe.state.target.x.toFixed(2)}` : 'no debug handle');
+
+      // 6. x-ray blending survives the portal
+      const xray = mount('x-ray-text');
+      check('x-ray-text blends with difference', getComputedStyle(xray.element).mixBlendMode === 'difference', getComputedStyle(xray.element).mixBlendMode);
+      check('x-ray-text is portalled to body', xray.element.closest('body') === document.body && !xray.element.parentElement.closest('#stage'), xray.element.parentElement.tagName);
+      unmount();
+
+      // 7. every mount cleans up after itself
+      const leftovers = document.querySelectorAll('[data-gm], .gm-cursor-hidden').length;
+      check('all mounts unmount cleanly', leftovers === 0, `${leftovers} leftover nodes/classes`);
+
+      document.getElementById('selftest').textContent = results.join('\n');
+      document.body.dataset.selftest = 'done';
+      document.title = results.every((r) => r.startsWith('PASS')) ? 'SELFTEST PASS' : 'SELFTEST FAIL';
+    })().catch((error) => {
+      document.getElementById('selftest').textContent = 'ERROR ' + error.message;
+      document.body.dataset.selftest = 'done';
+      document.title = 'SELFTEST ERROR';
+    });
+  }
+</script>
+</body>
+</html>
